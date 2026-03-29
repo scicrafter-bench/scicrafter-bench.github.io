@@ -417,6 +417,27 @@
     @media (max-width: 600px) {
       .video-grid { grid-template-columns: 1fr; }
     }
+    .video-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin: 24px 0;
+    }
+    @media (max-width: 800px) {
+      .video-grid-3 { grid-template-columns: 1fr; }
+    }
+    .failure-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+    }
+    .failure-badge.structural { background: #fde8e8; color: #991b1b; }
+    .failure-badge.propagation { background: #fef3c7; color: #92400e; }
+    .failure-badge.semantics { background: #dbeafe; color: #1e40af; }
+    .failure-badge.working { background: #d1fae5; color: #065f46; }
 
     /* ── Knowledge pipeline diagram ── */
     .pipeline {
@@ -688,6 +709,7 @@
     <a href="#tasks">Tasks</a>
     <a href="#method">Method</a>
     <a href="#results">Results</a>
+    <a href="#failures">Failure Analysis</a>
     <a href="#citation">Citation</a>
   </div>
 </nav>
@@ -1480,6 +1502,116 @@ receive maximum signal strength (15) and resets the decay counter.
   </p>
 
 
+</section>
+
+<!-- ════════════ Failure Analysis ════════════ -->
+<section class="section" id="failures">
+  <h2>Failure Analysis</h2>
+  <p>
+    To ground our quantitative decomposition in concrete agent behavior, we constructed 12 device variants of the 32-lamp broadcast task, each exhibiting a distinct failure mode. These failures cluster into three categories that align with our capacity decomposition. Below are five representative cases&mdash;press play to see the button activation and which lamps light up (or fail to).
+  </p>
+
+  <h3>Working Reference vs. Failure Cases</h3>
+
+  <div class="video-grid">
+    <div class="video-card">
+      <video controls muted playsinline preload="metadata">
+        <source src="static/videos/case-W-working-reference.mp4" type="video/mp4">
+      </video>
+      <div class="video-label">
+        <span class="failure-badge working">Working</span>
+        <h4>Working Reference &mdash; 32/32 lamps lit</h4>
+        <p>Correct four-axis topology with branch wires delivering signal to all 32 lamps. This is the target behavior all models aim to achieve.</p>
+      </div>
+    </div>
+    <div class="video-card">
+      <video controls muted playsinline preload="metadata">
+        <source src="static/videos/case-9-backwards-repeaters.mp4" type="video/mp4">
+      </video>
+      <div class="video-label">
+        <span class="failure-badge structural">Structural Failure</span>
+        <h4>Backwards Repeaters &mdash; 8/32 lamps lit</h4>
+        <p>The agent places four repeaters but orients them <em>backwards</em>, creating one-way barriers that block signal to 24 outer lamps. Typical of mid-tier models (Grok-4, GLM-4.7) that understand repeater usage but lack precise directional reasoning.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="video-grid-3">
+    <div class="video-card">
+      <video controls muted playsinline preload="metadata">
+        <source src="static/videos/case-1-long-snake.mp4" type="video/mp4">
+      </video>
+      <div class="video-label">
+        <span class="failure-badge propagation">Signal Propagation</span>
+        <h4>Long Snake &mdash; 10/32</h4>
+        <p>A 94-wire zigzag path with no repeaters. Signal decays to zero after 15 blocks, leaving distant lamps dark. Common in smaller models (Qwen3-32B, Qwen2.5-72B) that have not discovered the signal decay rule.</p>
+      </div>
+    </div>
+    <div class="video-card">
+      <video controls muted playsinline preload="metadata">
+        <source src="static/videos/case-2-islands.mp4" type="video/mp4">
+      </video>
+      <div class="video-label">
+        <span class="failure-badge semantics">Wire Semantics</span>
+        <h4>Islands &mdash; 16/32</h4>
+        <p>Two "island" sub-circuits look plausible but have no wire connection to the button. The agent doesn't recognize that every section must be physically connected. Observed across all model tiers.</p>
+      </div>
+    </div>
+    <div class="video-card">
+      <video controls muted playsinline preload="metadata">
+        <source src="static/videos/case-3-parallel-lines.mp4" type="video/mp4">
+      </video>
+      <div class="video-label">
+        <span class="failure-badge semantics">Wire Semantics</span>
+        <h4>Parallel Lines &mdash; 14/32</h4>
+        <p>N&ndash;S wires carry full power but only connect north/south. Lamps between lines stay dark due to wire directionality&mdash;the most subtle failure class, requiring deep domain knowledge to diagnose.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Failure Taxonomy</h3>
+  <p>
+    The 12 failure cases span a progression from obvious structural errors to subtle semantic misunderstandings, mirroring the capacity gap hierarchy from our quantitative analysis:
+  </p>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Cases</th>
+          <th>What Breaks</th>
+          <th>Capacity Gap</th>
+          <th>Model Tiers Affected</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="failure-badge structural">Structural</span></td>
+          <td>Glass Pedestal (0/32), Broken Bridge (0/32), Axes Only (0/32), Backwards Repeaters (8/32)</td>
+          <td>Incorrect block placement, orientation, or missing connections</td>
+          <td>Application</td>
+          <td>Primarily mid &amp; lower tier</td>
+        </tr>
+        <tr>
+          <td><span class="failure-badge propagation">Signal Propagation</span></td>
+          <td>Long Snake (10/32), Missing Rails (24/32), Tiny Core (8/32)</td>
+          <td>Signal cannot reach all lamps due to missing amplification or coverage</td>
+          <td>Discovery</td>
+          <td>Lower tier models</td>
+        </tr>
+        <tr>
+          <td><span class="failure-badge semantics">Wire Semantics</span></td>
+          <td>Islands (16/32), Parallel Lines (14/32), Connection Trap (20/32), Dead-End Hooks (12/20), The Ring (0/16)</td>
+          <td>Circuit appears correct but wire directionality prevents power delivery</td>
+          <td>Identification</td>
+          <td>All tiers including frontier</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="color:var(--text-secondary);font-size:0.88rem;margin-top:8px;">
+    <strong>Key insight:</strong> Category 3 (wire semantics) failures are the hardest to diagnose&mdash;circuits carry full signal power yet deliver zero to lamps. Even frontier models (Gemini-3-Pro, GPT-5.2) produce these failures, as they require recognizing that wire <em>connection direction</em> determines which blocks receive power&mdash;a mechanic not reliably captured in training data.
+  </p>
 </section>
 
 <!-- ════════════ Key Findings ════════════ -->
